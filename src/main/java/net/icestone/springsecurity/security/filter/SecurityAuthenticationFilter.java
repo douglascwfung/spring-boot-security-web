@@ -4,7 +4,7 @@ import net.icestone.springsecurity.common.AuthConstants;
 import net.icestone.springsecurity.security.authentication.UserAuthentication;
 import net.icestone.springsecurity.security.exception.TokenAuthenticationException;
 import net.icestone.springsecurity.security.user.AuthUser;
-import net.icestone.springsecurity.security.user.AuthUserCache;
+import net.icestone.springsecurity.service.jwt.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,10 +18,10 @@ import org.springframework.web.filter.OncePerRequestFilter;
 @Component
 public class SecurityAuthenticationFilter extends OncePerRequestFilter {
 
-  private final AuthUserCache authUserCache;
+  private final JwtService jwtService;
 
-  public SecurityAuthenticationFilter(AuthUserCache authUserCache) {
-    this.authUserCache = authUserCache;
+  public SecurityAuthenticationFilter(JwtService jwtService) {
+    this.jwtService = jwtService;
   }
 
   @Override
@@ -37,10 +37,8 @@ public class SecurityAuthenticationFilter extends OncePerRequestFilter {
       return;
     }
 
-    AuthUser authUser =
-        authUserCache
-            .getByToken(authenticationHeader)
-            .orElseThrow(() -> new TokenAuthenticationException("Token is not valid"));
+    String jwtToken = stripBearerPrefix(authenticationHeader);
+    AuthUser authUser = jwtService.resolveJwtToken(jwtToken);
 
     UserAuthentication authentication = new UserAuthentication(authUser);
 
@@ -49,5 +47,14 @@ public class SecurityAuthenticationFilter extends OncePerRequestFilter {
     SecurityContextHolder.setContext(securityContext);
 
     filterChain.doFilter(request, response);
+  }
+
+  String stripBearerPrefix(String token) {
+
+    if (!token.startsWith("Bearer")) {
+      throw new TokenAuthenticationException("Unsupported authentication scheme");
+    }
+
+    return token.substring(7);
   }
 }
