@@ -9,50 +9,43 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 //Now our user has to implement UserDetails, because that is required by UserDetailsService, which
-//is used by BasicAuthenticationFilter under the hoods of Spring Security
-//(BasicAuthenticationFilter -> ProviderManager -> DaoAuthenticationProvider -> UserDetailsService)
+//is used by UsernamePasswordAuthenticationFilter under the hoods of Spring Security
+//(UsernamePasswordAuthenticationFilter -> ProviderManager -> DaoAuthenticationProvider -> UserDetailsService)
 public record AuthUser(String userId, List<Role> roles, String passwordHash)
-implements UserDetails {
-
+ implements UserDetails {
 
 @Override
 public Collection<? extends GrantedAuthority> getAuthorities() {
-return roles.stream().map(role -> new SimpleGrantedAuthority(role.name())).toList();
+ return roles.stream().map(role -> new SimpleGrantedAuthority(role.name())).toList();
 }
-
 
 @Override
 public String getPassword() {
-return passwordHash;
+ return passwordHash;
 }
-
 
 @Override
 public String getUsername() {
-return null;
+ return null;
 }
-
 
 @Override
 public boolean isAccountNonExpired() {
-return true;
+ return true;
 }
-
 
 @Override
 public boolean isAccountNonLocked() {
-return true;
+ return true;
 }
-
 
 @Override
 public boolean isCredentialsNonExpired() {
-return true;
+ return true;
 }
-
 
 @Override
 public boolean isEnabled() {
-return true;
+ return true;
 }
 }

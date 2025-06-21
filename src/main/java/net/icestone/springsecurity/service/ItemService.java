@@ -101,7 +101,7 @@ public class ItemService {
     return itemRepository.findById(itemId).orElseThrow(NotFoundException::new);
   }
 
-  // due to these methods security responsibilities is scattered between controller and service
+  // for this method security responsibilities is scattered between controller and service
   private void checkAccessToItem(AuthUser authUser, ItemEntity itemEntity) {
 
     if (!authUser.roles().contains(Role.ROLE_ADMIN) && !isOwner(authUser, itemEntity)) {
