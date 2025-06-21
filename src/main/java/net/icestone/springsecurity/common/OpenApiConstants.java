@@ -2,5 +2,5 @@ package net.icestone.springsecurity.common;
 
 public interface OpenApiConstants {
 
-	  String TOKEN_SECURITY_REQUIREMENT = "Token";
+	String BASIC_SECURITY_REQUIREMENT = "Basic";
 	}

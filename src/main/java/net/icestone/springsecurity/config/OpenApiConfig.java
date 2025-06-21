@@ -9,8 +9,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @SecurityScheme(
-    name = OpenApiConstants.TOKEN_SECURITY_REQUIREMENT,
-    type = SecuritySchemeType.APIKEY,
-    in = SecuritySchemeIn.HEADER,
-    paramName = AuthConstants.AUTHORIZATION_HEADER)
+   name = OpenApiConstants.BASIC_SECURITY_REQUIREMENT,
+   type = SecuritySchemeType.HTTP,
+   scheme = "basic")
 public class OpenApiConfig {}
