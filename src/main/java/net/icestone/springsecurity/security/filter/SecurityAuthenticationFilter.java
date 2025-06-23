@@ -1,27 +1,31 @@
 package net.icestone.springsecurity.security.filter;
 
-import net.icestone.springsecurity.common.AuthConstants;
-import net.icestone.springsecurity.security.authentication.UserAuthentication;
-import net.icestone.springsecurity.security.exception.TokenAuthenticationException;
-import net.icestone.springsecurity.security.user.AuthUser;
-import net.icestone.springsecurity.security.user.AuthUserCache;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+// Usually, Spring Security implementations do not allocate a separate filter
+// to performing authentication itself (aka calling AuthenticationManager.authenticate(...))
+// and make calls to AuthenticationManager in the same filter where unauthenticated
+// authentication is created, but in this example let's dedicate a separate filter solely for
+// authentication of unauthenticated Authentication.
+// This filter should be registered in the chain after the filters
+// that create unauthenticated authentication.
 @Component
 public class SecurityAuthenticationFilter extends OncePerRequestFilter {
 
-  private final AuthUserCache authUserCache;
+  private final AuthenticationManager authenticationManager;
 
-  public SecurityAuthenticationFilter(AuthUserCache authUserCache) {
-    this.authUserCache = authUserCache;
+  public SecurityAuthenticationFilter(AuthenticationManager authenticationManager) {
+    this.authenticationManager = authenticationManager;
   }
 
   @Override
@@ -29,24 +33,24 @@ public class SecurityAuthenticationFilter extends OncePerRequestFilter {
       HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
       throws ServletException, IOException {
 
-    String authenticationHeader = request.getHeader(AuthConstants.AUTHORIZATION_HEADER);
+    Authentication unauthenticatedAuthentication =
+        SecurityContextHolder.getContext().getAuthentication();
 
-    if (authenticationHeader == null) {
-      // Authentication token is not present, let's rely on anonymous authentication
+    if (unauthenticatedAuthentication == null || unauthenticatedAuthentication.isAuthenticated()) {
+
       filterChain.doFilter(request, response);
       return;
     }
 
-    AuthUser authUser =
-        authUserCache
-            .getByToken(authenticationHeader)
-            .orElseThrow(() -> new TokenAuthenticationException("Token is not valid"));
+    Authentication authenticatedAuthentication =
+        authenticationManager.authenticate(unauthenticatedAuthentication);
 
-    UserAuthentication authentication = new UserAuthentication(authUser);
+    if (authenticatedAuthentication != null) {
 
-    SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
-    securityContext.setAuthentication(authentication);
-    SecurityContextHolder.setContext(securityContext);
+      SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+      securityContext.setAuthentication(authenticatedAuthentication);
+      SecurityContextHolder.setContext(securityContext);
+    }
 
     filterChain.doFilter(request, response);
   }

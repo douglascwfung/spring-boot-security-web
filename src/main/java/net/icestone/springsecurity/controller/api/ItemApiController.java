@@ -1,23 +1,36 @@
 package net.icestone.springsecurity.controller.api;
 
-import net.icestone.springsecurity.common.OpenApiConstants;
-import net.icestone.springsecurity.dto.item.ItemRequest;
-import net.icestone.springsecurity.dto.item.ItemResponse;
-import net.icestone.springsecurity.security.user.AuthUser;
-import net.icestone.springsecurity.service.ItemService;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
+import net.icestone.springsecurity.common.OpenApiConstants;
+import net.icestone.springsecurity.dto.item.ItemRequest;
+import net.icestone.springsecurity.dto.item.ItemResponse;
+import net.icestone.springsecurity.security.user.AuthUser;
+import net.icestone.springsecurity.service.ItemService;
 
 @RestController
 @RequestMapping("/api/items")
-@SecurityRequirement(name = OpenApiConstants.TOKEN_SECURITY_REQUIREMENT)
+@SecurityRequirements({
+  @SecurityRequirement(name = OpenApiConstants.BEARER_TOKEN_SECURITY_REQUIREMENT),
+  @SecurityRequirement(name = OpenApiConstants.API_KEY_SECURITY_REQUIREMENT)
+})
 public class ItemApiController {
 
   private final ItemService itemService;

@@ -1,0 +1,14 @@
+package net.icestone.springsecurity.config.properties;
+
+import java.util.Map;
+import lombok.Data;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+@ConfigurationProperties(prefix = "api-key")
+@Data
+public class ApiKeyClientsProperties {
+
+  private Map<String, String> clients;
+}
