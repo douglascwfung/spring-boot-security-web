@@ -1,9 +1,12 @@
 package net.icestone.springsecurity.config;
 
-import org.springframework.beans.factory.annotation.Qualifier;
+import net.icestone.springsecurity.security.configurer.ApiKeyAuthenticationConfigurer;
+import net.icestone.springsecurity.security.configurer.AuthenticationManagerEventListenersConfigurer;
+import net.icestone.springsecurity.security.configurer.JwtAuthenticationConfigurer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -13,19 +16,32 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
-import org.springframework.security.web.access.intercept.AuthorizationFilter;
-import org.springframework.security.web.authentication.AuthenticationFilter;
 
 @EnableMethodSecurity // allow to specify access via annotations
 @Configuration
 public class SecurityConfig {
+
+  private final ApiKeyAuthenticationConfigurer apiKeyAuthenticationConfigurer;
+
+  private final JwtAuthenticationConfigurer jwtAuthenticationConfigurer;
+
+  private final AuthenticationManagerEventListenersConfigurer
+      authenticationManagerEventListenersConfigurer;
 
   private final AuthenticationEntryPoint authenticationEntryPoint;
 
   private final AccessDeniedHandler accessDeniedHandler;
 
   public SecurityConfig(
-      AuthenticationEntryPoint authenticationEntryPoint, AccessDeniedHandler accessDeniedHandler) {
+      ApiKeyAuthenticationConfigurer apiKeyAuthenticationConfigurer,
+      JwtAuthenticationConfigurer jwtAuthenticationConfigurer,
+      AuthenticationManagerEventListenersConfigurer authenticationManagerEventListenersConfigurer,
+      AuthenticationEntryPoint authenticationEntryPoint,
+      AccessDeniedHandler accessDeniedHandler) {
+    this.apiKeyAuthenticationConfigurer = apiKeyAuthenticationConfigurer;
+    this.jwtAuthenticationConfigurer = jwtAuthenticationConfigurer;
+    this.authenticationManagerEventListenersConfigurer =
+        authenticationManagerEventListenersConfigurer;
     this.authenticationEntryPoint = authenticationEntryPoint;
     this.accessDeniedHandler = accessDeniedHandler;
   }
@@ -36,14 +52,11 @@ public class SecurityConfig {
   }
 
   @Bean
-  public SecurityFilterChain filterChain(
-      HttpSecurity http,
-      @Qualifier("jwtAuthenticationFilter") AuthenticationFilter jwtAuthenticationFilter,
-      @Qualifier("apiKeyAuthenticationFilter") AuthenticationFilter apiKeyAuthenticationFilter)
-      throws Exception {
+  public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
-    http.addFilterBefore(jwtAuthenticationFilter, AuthorizationFilter.class)
-        .addFilterBefore(apiKeyAuthenticationFilter, AuthorizationFilter.class)
+    http.with(apiKeyAuthenticationConfigurer, Customizer.withDefaults())
+        .with(jwtAuthenticationConfigurer, Customizer.withDefaults())
+        .with(authenticationManagerEventListenersConfigurer, Customizer.withDefaults())
         .authorizeHttpRequests(
             mather ->
                 mather
@@ -72,4 +85,4 @@ public class SecurityConfig {
 
     return http.build();
   }
-} 
+}
