@@ -1,8 +1,6 @@
 package net.icestone.springsecurity.config;
 
-import net.icestone.springsecurity.security.filter.ApiKeyFilter;
-import net.icestone.springsecurity.security.filter.JwtTokenFilter;
-import net.icestone.springsecurity.security.filter.SecurityAuthenticationFilter;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -16,31 +14,18 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
+import org.springframework.security.web.authentication.AuthenticationFilter;
 
 @EnableMethodSecurity // allow to specify access via annotations
 @Configuration
 public class SecurityConfig {
-
-  private final JwtTokenFilter jwtTokenFilter;
-
-  private final ApiKeyFilter apiKeyFilter;
-
-  private final SecurityAuthenticationFilter securityAuthenticationFilter;
 
   private final AuthenticationEntryPoint authenticationEntryPoint;
 
   private final AccessDeniedHandler accessDeniedHandler;
 
   public SecurityConfig(
-      JwtTokenFilter jwtTokenFilter,
-      ApiKeyFilter apiKeyFilter,
-      SecurityAuthenticationFilter securityAuthenticationFilter,
-      AuthenticationEntryPoint authenticationEntryPoint,
-      AccessDeniedHandler accessDeniedHandler) {
-    this.jwtTokenFilter = jwtTokenFilter;
-    this.apiKeyFilter = apiKeyFilter;
-
-    this.securityAuthenticationFilter = securityAuthenticationFilter;
+      AuthenticationEntryPoint authenticationEntryPoint, AccessDeniedHandler accessDeniedHandler) {
     this.authenticationEntryPoint = authenticationEntryPoint;
     this.accessDeniedHandler = accessDeniedHandler;
   }
@@ -51,11 +36,14 @@ public class SecurityConfig {
   }
 
   @Bean
-  public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+  public SecurityFilterChain filterChain(
+      HttpSecurity http,
+      @Qualifier("jwtAuthenticationFilter") AuthenticationFilter jwtAuthenticationFilter,
+      @Qualifier("apiKeyAuthenticationFilter") AuthenticationFilter apiKeyAuthenticationFilter)
+      throws Exception {
 
-    http.addFilterBefore(securityAuthenticationFilter, AuthorizationFilter.class)
-        .addFilterBefore(jwtTokenFilter, SecurityAuthenticationFilter.class)
-        .addFilterBefore(apiKeyFilter, JwtTokenFilter.class)
+    http.addFilterBefore(jwtAuthenticationFilter, AuthorizationFilter.class)
+        .addFilterBefore(apiKeyAuthenticationFilter, AuthorizationFilter.class)
         .authorizeHttpRequests(
             mather ->
                 mather
@@ -84,4 +72,4 @@ public class SecurityConfig {
 
     return http.build();
   }
-}
+} 

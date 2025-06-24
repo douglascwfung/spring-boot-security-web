@@ -1,74 +1,79 @@
 package net.icestone.springsecurity.security.authentication;
 
-import net.icestone.springsecurity.security.user.AuthUser;
 import java.util.Collection;
+import java.util.Set;
 import java.util.stream.Collectors;
-import org.springframework.security.core.Authentication;
+
+import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+
+import net.icestone.springsecurity.security.user.AuthUser;
+
+
+//Let's extend AbstractAuthenticationToken this time, so we will need to override fewer methods
+public class ApiKeyAuthentication extends AbstractAuthenticationToken {
 
 
 // You might want to have different AuthenticationPrincipals for different authentications,
 // but let's stick to the AuthUser being a principal in both authentications in this example
-public record ApiKeyAuthentication(AuthUser authUser, boolean authenticated, String apiKey)
-   implements Authentication {
+private final AuthUser authUser;
 
 
- public static ApiKeyAuthentication unauthenticated(String apiKey) {
+private final String apiKey;
 
 
-   return new ApiKeyAuthentication(null, false, apiKey);
- }
+private ApiKeyAuthentication(
+  Collection<? extends GrantedAuthority> authorities,
+  AuthUser authUser,
+  boolean authenticated,
+  String apiKey) {
 
 
- public static ApiKeyAuthentication authenticated(AuthUser authUser) {
+super(authorities);
+super.setAuthenticated(authenticated);
 
 
-   return new ApiKeyAuthentication(authUser, true, null);
- }
+this.authUser = authUser;
+this.apiKey = apiKey;
+}
 
 
- @Override
- public Collection<? extends GrantedAuthority> getAuthorities() {
-   return authUser.roles().stream()
-       .map(Enum::name)
-       .map(SimpleGrantedAuthority::new)
-       .collect(Collectors.toSet());
- }
+public static ApiKeyAuthentication unauthenticated(String apiKey) {
 
 
- @Override
- public Object getCredentials() {
-   return apiKey;
- }
+return new ApiKeyAuthentication(null, null, false, apiKey);
+}
 
 
- @Override
- public Object getDetails() {
-   return null;
- }
+public static ApiKeyAuthentication authenticated(AuthUser authUser) {
 
 
- @Override
- public Object getPrincipal() {
-   return authUser;
- }
+Set<SimpleGrantedAuthority> authorities =
+    authUser.roles().stream()
+        .map(Enum::name)
+        .map(SimpleGrantedAuthority::new)
+        .collect(Collectors.toSet());
 
 
- @Override
- public boolean isAuthenticated() {
-   return authenticated;
- }
+return new ApiKeyAuthentication(authorities, authUser, true, null);
+}
 
 
- @Override
- public void setAuthenticated(boolean isAuthenticated) throws IllegalArgumentException {
-   throw new UnsupportedOperationException();
- }
+@Override
+public String getCredentials() {
+return apiKey;
+}
 
 
- @Override
- public String getName() {
-   return null;
- }
+@Override
+public Object getPrincipal() {
+return authUser;
+}
+
+
+@Override
+public void setAuthenticated(boolean isAuthenticated) throws IllegalArgumentException {
+throw new UnsupportedOperationException();
+}
 }
